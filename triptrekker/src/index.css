@@ -1,0 +1,26 @@
+
+:root {
+  font-family: 'DM Sans', sans-serif;
+  color: #183442;
+  background: #ffffff;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  margin: 0;
+  padding: 0;
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+button, input, select {
+  font-family: inherit;
+}
