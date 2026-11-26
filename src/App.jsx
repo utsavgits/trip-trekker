@@ -1,6 +1,8 @@
 
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
+import Navbar from "./components/Navbar";
+
 import Home from "./Home";
 import Flights from "./pages/Flights";
 import Hotels from "./pages/Hotels";
@@ -14,10 +16,13 @@ import BookingResults from "./pages/BookingResults";
 import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
 import DestinationDetails from "./pages/DestinationDetails";
+import TripPlanner from "./pages/TripPlanner";
 
 function App() {
   return (
     <BrowserRouter>
+      <Navbar />
+
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/flights" element={<Flights />} />
@@ -32,6 +37,7 @@ function App() {
         <Route path="/booking-results" element={<BookingResults />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/trip-planner" element={<TripPlanner />} />
       </Routes>
     </BrowserRouter>
   );

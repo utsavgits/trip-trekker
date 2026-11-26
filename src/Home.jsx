@@ -90,44 +90,7 @@ function Home() {
   return (
     <div className="app">
 
-      {/* Navigation */}
-      <header className="navbar">
-        <Link to="/" className="brand">
-          <span className="brand-icon">
-            <Plane size={22} />
-          </span>
-
-          <span>
-            Trip<span className="brand-highlight">Trekker</span>
-          </span>
-        </Link>
-
-        <nav className="nav-links">
-          <Link to="/" className="active">Home</Link>
-          <Link to="/explore">Explore</Link>
-          <Link to="/dashboard">Dashboard</Link>
-          <a href="#packages">Packages</a>
-          <a href="#offers">Offers</a>
-        </nav>
-
-        <div className="nav-actions">
-          <button
-            className="help-button"
-            onClick={() => navigate("/explore")}
-          >
-            <Headphones size={17} />
-            <span>Help</span>
-          </button>
-
-          <button
-            className="login-button"
-            onClick={() => navigate("/login")}
-          >
-            Login / Sign up
-            <ArrowRight size={16} />
-          </button>
-        </div>
-      </header>
+      
 
       {/* Hero */}
       <main>
