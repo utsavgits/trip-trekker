@@ -8,6 +8,7 @@ import authRoutes from "./routes/authRoutes.js";
 import bookingRoutes from "./routes/bookingRoutes.js";
 import destinationRoutes from "./routes/destinationRoutes.js";
 import tripRoutes from "./routes/tripRoutes.js";
+import itineraryRoutes from "./routes/itineraryRoutes.js";
 
 dotenv.config();
 
@@ -36,6 +37,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/bookings", bookingRoutes);
 app.use("/api/destinations", destinationRoutes);
 app.use("/api/trips", tripRoutes);
+app.use("/api/itinerary", itineraryRoutes);
 
 const startServer = async () => {
   try {

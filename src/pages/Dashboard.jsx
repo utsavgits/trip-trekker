@@ -1,6 +1,7 @@
 
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import MyTrips from "../components/MyTrips";
 
 import {
   Plane,
@@ -608,7 +609,8 @@ function Dashboard() {
             })}
           </div>
         </section>
-
+        {/* SAVED TRIPS */}
+<MyTrips />
         {/* MY TRIPS AND BOOKINGS */}
         <section className="dashboard-section">
           <div className="section-heading">
