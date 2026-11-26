@@ -1,6 +1,7 @@
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+
 import {
   ArrowLeft,
   Search,
@@ -12,89 +13,11 @@ import {
   Waves,
   Building2,
   Compass,
-  X
+  X,
+  SlidersHorizontal
 } from "lucide-react";
 
-const destinations = [
-  {
-    id: 1,
-    name: "Manali",
-    location: "Himachal Pradesh, India",
-    category: "Mountains",
-    duration: "5 Days / 4 Nights",
-    price: 12999,
-    rating: "4.9",
-    image: "https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?auto=format&fit=crop&w=900&q=80",
-    description:
-      "Explore snow-covered mountains, beautiful valleys and the peaceful atmosphere of the Himalayas.",
-    highlights: ["Solang Valley", "Rohtang Pass", "Old Manali"]
-  },
-  {
-    id: 2,
-    name: "Goa",
-    location: "Goa, India",
-    category: "Beaches",
-    duration: "4 Days / 3 Nights",
-    price: 9999,
-    rating: "4.8",
-    image: "https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?auto=format&fit=crop&w=900&q=80",
-    description:
-      "Enjoy beautiful beaches, sunset views, local food and the relaxed coastal lifestyle.",
-    highlights: ["Baga Beach", "Fort Aguada", "Calangute"]
-  },
-  {
-    id: 3,
-    name: "Jaipur",
-    location: "Rajasthan, India",
-    category: "Cities",
-    duration: "3 Days / 2 Nights",
-    price: 7999,
-    rating: "4.7",
-    image: "https://images.unsplash.com/photo-1599661046827-dacff0c0f09a?auto=format&fit=crop&w=900&q=80",
-    description:
-      "Discover royal palaces, historic forts, colourful markets and authentic Rajasthani culture.",
-    highlights: ["Hawa Mahal", "Amber Fort", "City Palace"]
-  },
-  {
-    id: 4,
-    name: "Kashmir",
-    location: "Jammu & Kashmir, India",
-    category: "Mountains",
-    duration: "6 Days / 5 Nights",
-    price: 18999,
-    rating: "4.9",
-    image: "https://images.unsplash.com/photo-1595815771614-ade9d652a65d?auto=format&fit=crop&w=900&q=80",
-    description:
-      "Experience breathtaking landscapes, peaceful lakes and unforgettable mountain views.",
-    highlights: ["Srinagar", "Gulmarg", "Dal Lake"]
-  },
-  {
-    id: 5,
-    name: "Rishikesh",
-    location: "Uttarakhand, India",
-    category: "Mountains",
-    duration: "3 Days / 2 Nights",
-    price: 5999,
-    rating: "4.8",
-    image: "https://images.unsplash.com/photo-1605649487212-47bdab064df7?auto=format&fit=crop&w=900&q=80",
-    description:
-      "A perfect escape for river rafting, adventure activities and peaceful mountain surroundings.",
-    highlights: ["River Rafting", "Lakshman Jhula", "Ganga Aarti"]
-  },
-  {
-    id: 6,
-    name: "Mumbai",
-    location: "Maharashtra, India",
-    category: "Cities",
-    duration: "3 Days / 2 Nights",
-    price: 8999,
-    rating: "4.6",
-    image: "https://images.unsplash.com/photo-1570168007204-dfb528c6958f?auto=format&fit=crop&w=900&q=80",
-    description:
-      "Explore India's vibrant city life, famous landmarks, street food and coastal attractions.",
-    highlights: ["Gateway of India", "Marine Drive", "Juhu Beach"]
-  }
-];
+const API_URL = "http://localhost:5000/api/destinations";
 
 const categories = ["All", "Mountains", "Beaches", "Cities"];
 
@@ -102,22 +25,90 @@ function Explore() {
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
   const [selectedDestination, setSelectedDestination] = useState(null);
+  const [sort, setSort] = useState("");
 
-  const filteredDestinations = destinations.filter((destination) => {
-    const matchesSearch =
-      destination.name.toLowerCase().includes(search.toLowerCase()) ||
-      destination.location.toLowerCase().includes(search.toLowerCase());
+  const [destinations, setDestinations] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-    const matchesCategory =
-      activeCategory === "All" ||
-      destination.category === activeCategory;
+  // FETCH DESTINATIONS FROM MYSQL API
+  useEffect(() => {
+    const controller = new AbortController();
 
-    return matchesSearch && matchesCategory;
-  });
+    const fetchDestinations = async () => {
+      try {
+        setLoading(true);
+        setError("");
+
+        const params = new URLSearchParams();
+
+        if (search.trim()) {
+          params.append("search", search.trim());
+        }
+
+        if (activeCategory !== "All") {
+          params.append("category", activeCategory);
+        }
+
+        if (sort) {
+          params.append("sort", sort);
+        }
+
+        const queryString = params.toString();
+
+        const response = await fetch(
+          `${API_URL}${queryString ? `?${queryString}` : ""}`,
+          { signal: controller.signal }
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch destinations.");
+        }
+
+        const data = await response.json();
+
+        if (!data.success) {
+          throw new Error(data.message || "Unable to load destinations.");
+        }
+
+        setDestinations(
+          data.destinations.map((destination) => ({
+            ...destination,
+            location: `${destination.state}, India`,
+            price: Number(destination.price),
+            rating: String(destination.rating),
+            highlights:
+              typeof destination.highlights === "string"
+                ? JSON.parse(destination.highlights)
+                : destination.highlights || []
+          }))
+        );
+
+      } catch (err) {
+        if (err.name !== "AbortError") {
+          console.error("Destination API Error:", err);
+          setError(err.message || "Something went wrong.");
+        }
+      } finally {
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    const timer = setTimeout(fetchDestinations, 300);
+
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+
+  }, [search, activeCategory, sort]);
 
   return (
     <div className="explore-page">
 
+      {/* TOP NAVIGATION */}
       <div className="explore-topbar">
         <Link to="/" className="explore-back">
           <ArrowLeft size={18} />
@@ -129,8 +120,10 @@ function Explore() {
         </Link>
       </div>
 
+      {/* HERO SECTION */}
       <section className="explore-hero">
         <div className="explore-hero-content">
+
           <span className="explore-eyebrow">
             <Compass size={16} />
             YOUR NEXT ADVENTURE STARTS HERE
@@ -166,10 +159,12 @@ function Explore() {
                 <X size={18} />
               </button>
             )}
+
           </div>
         </div>
       </section>
 
+      {/* DESTINATION CONTENT */}
       <section className="explore-content">
 
         <div className="explore-section-heading">
@@ -180,7 +175,9 @@ function Explore() {
           </div>
         </div>
 
+        {/* CATEGORY FILTERS */}
         <div className="explore-categories">
+
           {categories.map((category) => (
             <button
               key={category}
@@ -197,27 +194,84 @@ function Explore() {
               {category}
             </button>
           ))}
+
         </div>
 
+        {/* RESULTS HEADING AND SORTING */}
         <div className="explore-results-heading">
-          <h3>Popular destinations</h3>
+          <div>
+            <h3>Popular destinations</h3>
 
-          <span>
-            {filteredDestinations.length} destinations found
-          </span>
+            <span>
+              {loading
+                ? "Loading destinations..."
+                : `${destinations.length} destinations found`}
+            </span>
+          </div>
+
+          <div className="explore-sort">
+            <SlidersHorizontal size={18} />
+
+            <select
+              value={sort}
+              onChange={(e) => setSort(e.target.value)}
+              aria-label="Sort destinations"
+            >
+              <option value="">Recommended</option>
+              <option value="price-low">Price: Low to High</option>
+              <option value="price-high">Price: High to Low</option>
+              <option value="rating">Top Rated</option>
+            </select>
+          </div>
         </div>
 
-        {filteredDestinations.length > 0 ? (
+        {/* LOADING STATE */}
+        {loading ? (
+
+          <div className="explore-empty">
+            <Compass size={38} />
+            <h3>Finding amazing places...</h3>
+            <p>Please wait while we load destinations.</p>
+          </div>
+
+        ) : error ? (
+
+          /* ERROR STATE */
+          <div className="explore-empty">
+            <Compass size={38} />
+            <h3>Unable to load destinations</h3>
+            <p>{error}</p>
+
+            <button
+              onClick={() => {
+                setSearch("");
+                setActiveCategory("All");
+                setSort("");
+              }}
+            >
+              Try Again
+            </button>
+          </div>
+
+        ) : destinations.length > 0 ? (
+
+          /* DESTINATION CARDS */
           <div className="destination-grid">
 
-            {filteredDestinations.map((destination) => (
-              <article className="destination-card" key={destination.id}>
+            {destinations.map((destination) => (
+
+              <article
+                className="destination-card"
+                key={destination.id}
+              >
 
                 <div className="destination-image-wrapper">
+
                   <img
                     src={destination.image}
                     alt={destination.name}
                     className="destination-image"
+                    loading="lazy"
                   />
 
                   <span className="destination-category">
@@ -227,6 +281,7 @@ function Explore() {
                   <span className="destination-rating">
                     ★ {destination.rating}
                   </span>
+
                 </div>
 
                 <div className="destination-card-content">
@@ -250,6 +305,7 @@ function Explore() {
                   <div className="destination-card-bottom">
 
                     <div className="destination-price">
+
                       <span>Starting from</span>
 
                       <strong>
@@ -258,6 +314,7 @@ function Explore() {
                       </strong>
 
                       <small>per person</small>
+
                     </div>
 
                     <button
@@ -279,8 +336,11 @@ function Explore() {
 
                   </div>
 
+                  {/* EXTRA DETAILS */}
                   {selectedDestination === destination.id && (
+
                     <div className="destination-extra-details">
+
                       <h4>Top experiences</h4>
 
                       <ul>
@@ -294,16 +354,24 @@ function Explore() {
                         Final pricing and availability will be added
                         through provider integrations.
                       </p>
+
                     </div>
+
                   )}
 
                 </div>
+
               </article>
+
             ))}
 
           </div>
+
         ) : (
+
+          /* EMPTY STATE */
           <div className="explore-empty">
+
             <Compass size={38} />
 
             <h3>No destinations found</h3>
@@ -314,16 +382,21 @@ function Explore() {
               onClick={() => {
                 setSearch("");
                 setActiveCategory("All");
+                setSort("");
               }}
             >
               Clear Filters
             </button>
+
           </div>
+
         )}
 
       </section>
 
+      {/* CTA SECTION */}
       <section className="explore-cta">
+
         <div>
           <span>YOUR JOURNEY, YOUR WAY</span>
 
@@ -338,9 +411,12 @@ function Explore() {
           Plan Your Trip
           <ArrowRight size={18} />
         </Link>
+
       </section>
 
+      {/* FOOTER */}
       <footer className="explore-footer">
+
         <Link to="/" className="explore-logo">
           Trip<span>Trekker</span>
         </Link>
@@ -348,6 +424,7 @@ function Explore() {
         <p>Discover more. Travel better.</p>
 
         <span>© 2026 TripTrekker</span>
+
       </footer>
 
     </div>

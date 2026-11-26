@@ -2816,3 +2816,64 @@ a {
 .auth-form-content form .auth-input-wrapper {
   height: 50px;
 }
+
+/* ================================
+   EXPLORE DESTINATION SORTING
+================================ */
+
+.explore-results-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.explore-sort {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  color: #176b5b;
+  transition: all 0.25s ease;
+}
+
+.explore-sort:hover {
+  border-color: #176b5b;
+  box-shadow: 0 4px 14px rgba(23, 107, 91, 0.08);
+}
+
+.explore-sort select {
+  border: none;
+  outline: none;
+  background: transparent;
+  color: #263b36;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  min-width: 155px;
+}
+
+.explore-sort select option {
+  background: #ffffff;
+  color: #263b36;
+}
+
+@media (max-width: 600px) {
+  .explore-results-heading {
+    align-items: flex-start;
+  }
+
+  .explore-sort {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .explore-sort select {
+    flex: 1;
+  }
+}
