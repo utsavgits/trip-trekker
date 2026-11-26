@@ -13,6 +13,7 @@ import Signup from "./pages/Signup";
 import BookingResults from "./pages/BookingResults";
 import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
+import DestinationDetails from "./pages/DestinationDetails";
 
 function App() {
   return (
@@ -25,6 +26,7 @@ function App() {
         <Route path="/buses" element={<Buses />} />
         <Route path="/cabs" element={<Cabs />} />
         <Route path="/explore" element={<Explore />} />
+        <Route path="/destination/:id" element={<DestinationDetails />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/booking-results" element={<BookingResults />} />

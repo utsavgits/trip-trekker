@@ -317,22 +317,13 @@ function Explore() {
 
                     </div>
 
-                    <button
-                      className="destination-details-button"
-                      onClick={() =>
-                        setSelectedDestination(
-                          selectedDestination === destination.id
-                            ? null
-                            : destination.id
-                        )
-                      }
-                    >
-                      {selectedDestination === destination.id
-                        ? "Hide Details"
-                        : "View Details"}
-
-                      <ArrowRight size={16} />
-                    </button>
+                    <Link
+  to={`/destination/${destination.id}`}
+  className="destination-details-button"
+>
+  View Details
+  <ArrowRight size={16} />
+</Link>
 
                   </div>
 
