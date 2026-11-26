@@ -7,6 +7,7 @@ import { connectDB } from "./config/mysql.js";
 import authRoutes from "./routes/authRoutes.js";
 import bookingRoutes from "./routes/bookingRoutes.js";
 import destinationRoutes from "./routes/destinationRoutes.js";
+import tripRoutes from "./routes/tripRoutes.js";
 
 dotenv.config();
 
@@ -34,6 +35,7 @@ app.get("/api/health", (req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/bookings", bookingRoutes);
 app.use("/api/destinations", destinationRoutes);
+app.use("/api/trips", tripRoutes);
 
 const startServer = async () => {
   try {

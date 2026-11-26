@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   MapPin,
   CalendarDays,
@@ -14,8 +14,16 @@ import {
 } from "lucide-react";
 
 function TripPlanner() {
+  const [destinations, setDestinations] = useState([]);
+  const [loadingDestinations, setLoadingDestinations] = useState(true);
+  const [destinationError, setDestinationError] = useState("");
+
+  const [isSaving, setIsSaving] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+
   const [formData, setFormData] = useState({
-    destination: "",
+    destinationId: "",
     startDate: "",
     endDate: "",
     travellers: "2",
@@ -23,6 +31,43 @@ function TripPlanner() {
     travelStyle: "Adventure",
     interests: [],
   });
+
+  // Fetch destinations from MySQL through backend API
+  useEffect(() => {
+    const controller = new AbortController();
+
+    const fetchDestinations = async () => {
+      try {
+        setLoadingDestinations(true);
+        setDestinationError("");
+
+        const response = await fetch(
+          "http://localhost:5000/api/destinations",
+          { signal: controller.signal }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+          throw new Error(data.message || "Unable to load destinations.");
+        }
+
+        setDestinations(data.destinations || []);
+      } catch (error) {
+        if (error.name !== "AbortError") {
+          setDestinationError(error.message || "Something went wrong.");
+        }
+      } finally {
+        if (!controller.signal.aborted) {
+          setLoadingDestinations(false);
+        }
+      }
+    };
+
+    fetchDestinations();
+
+    return () => controller.abort();
+  }, []);
 
   const interestsList = [
     { name: "Adventure", icon: Mountain },
@@ -39,6 +84,9 @@ function TripPlanner() {
       ...prev,
       [name]: value,
     }));
+
+    setSubmitError("");
+    setSuccessMessage("");
   };
 
   const toggleInterest = (interest) => {
@@ -48,12 +96,68 @@ function TripPlanner() {
         ? prev.interests.filter((item) => item !== interest)
         : [...prev.interests, interest],
     }));
+
+    setSubmitError("");
+    setSuccessMessage("");
   };
 
-  const handleSubmit = (e) => {
+  // Save trip to MySQL through backend API
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    alert("Trip form submitted! Backend integration is coming next.");
-    console.log("Trip Details:", formData);
+
+    setSubmitError("");
+    setSuccessMessage("");
+
+    if (formData.endDate < formData.startDate) {
+      setSubmitError("End date cannot be earlier than start date.");
+      return;
+    }
+
+    const token = localStorage.getItem("tripTrekkerToken");
+
+    if (!token) {
+      setSubmitError("Please login first to create your trip.");
+      return;
+    }
+
+    try {
+      setIsSaving(true);
+
+      const response = await fetch("http://localhost:5000/api/trips", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || "Unable to create trip.");
+      }
+
+      setSuccessMessage("Your trip has been saved successfully!");
+
+      console.log("Saved Trip:", data.trip);
+
+      setFormData({
+        destinationId: "",
+        startDate: "",
+        endDate: "",
+        travellers: "2",
+        budget: "",
+        travelStyle: "Adventure",
+        interests: [],
+      });
+
+    } catch (error) {
+      console.error("Create Trip Error:", error);
+      setSubmitError(error.message || "Something went wrong.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -90,20 +194,47 @@ function TripPlanner() {
               <label>
                 <MapPin size={17} /> Destination
               </label>
-              <input
-                type="text"
-                name="destination"
-                placeholder="Where do you want to go?"
-                value={formData.destination}
+
+              <select
+                name="destinationId"
+                value={formData.destinationId}
                 onChange={handleChange}
                 required
-              />
+                disabled={loadingDestinations || destinations.length === 0}
+              >
+                <option value="">
+                  {loadingDestinations
+                    ? "Loading destinations..."
+                    : "Select your destination"}
+                </option>
+
+                {destinations.map((destination) => (
+                  <option key={destination.id} value={destination.id}>
+                    {destination.name}, {destination.state}
+                  </option>
+                ))}
+              </select>
+
+              {destinationError && (
+                <small className="trip-destination-error">
+                  {destinationError}
+                </small>
+              )}
+
+              {!loadingDestinations &&
+                !destinationError &&
+                destinations.length === 0 && (
+                  <small className="trip-destination-error">
+                    No destinations available right now.
+                  </small>
+                )}
             </div>
 
             <div className="trip-form-group">
               <label>
                 <Users size={17} /> Number of Travellers
               </label>
+
               <select
                 name="travellers"
                 value={formData.travellers}
@@ -121,6 +252,7 @@ function TripPlanner() {
               <label>
                 <CalendarDays size={17} /> Start Date
               </label>
+
               <input
                 type="date"
                 name="startDate"
@@ -135,12 +267,16 @@ function TripPlanner() {
               <label>
                 <CalendarDays size={17} /> End Date
               </label>
+
               <input
                 type="date"
                 name="endDate"
                 value={formData.endDate}
                 onChange={handleChange}
-                min={formData.startDate || new Date().toISOString().split("T")[0]}
+                min={
+                  formData.startDate ||
+                  new Date().toISOString().split("T")[0]
+                }
                 required
               />
             </div>
@@ -149,6 +285,7 @@ function TripPlanner() {
               <label>
                 <Wallet size={17} /> Total Budget (₹)
               </label>
+
               <input
                 type="number"
                 name="budget"
@@ -164,6 +301,7 @@ function TripPlanner() {
               <label>
                 <Compass size={17} /> Travel Style
               </label>
+
               <select
                 name="travelStyle"
                 value={formData.travelStyle}
@@ -192,7 +330,9 @@ function TripPlanner() {
                   <button
                     type="button"
                     key={interest.name}
-                    className={`trip-interest-card ${selected ? "selected" : ""}`}
+                    className={`trip-interest-card ${
+                      selected ? "selected" : ""
+                    }`}
                     onClick={() => toggleInterest(interest.name)}
                   >
                     <Icon size={21} />
@@ -203,8 +343,25 @@ function TripPlanner() {
             </div>
           </div>
 
-          <button type="submit" className="trip-submit-button">
-            Create My Trip <Compass size={19} />
+          {submitError && (
+            <p className="trip-destination-error">{submitError}</p>
+          )}
+
+          {successMessage && (
+            <p className="trip-success-message">{successMessage}</p>
+          )}
+
+          <button
+            type="submit"
+            className="trip-submit-button"
+            disabled={
+              loadingDestinations ||
+              destinations.length === 0 ||
+              isSaving
+            }
+          >
+            {isSaving ? "Saving Your Trip..." : "Create My Trip"}
+            {!isSaving && <Compass size={19} />}
           </button>
         </form>
       </section>
